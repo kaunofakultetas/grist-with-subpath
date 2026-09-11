@@ -14,7 +14,7 @@ import { modal } from "app/client/ui2018/modals";
 import { BaseAPI } from "app/common/BaseAPI";
 import { commonUrls, getPageTitleSuffix } from "app/common/gristUrls";
 import { UserPrefs } from "app/common/Prefs";
-import { getGristConfig } from "app/common/urlUtils";
+import { appendBasePath, getGristConfig } from "app/common/urlUtils";
 
 import {
   Computed,
@@ -181,7 +181,7 @@ function saveQuestions(state: QuestionsState) {
   const use_cases = choices.filter((c, i) => useCases[i].get()).map(c => c.textKey);
   const use_other = use_cases.includes("Other") ? useOther.get() : "";
   const submitUrl = new URL(window.location.href);
-  submitUrl.pathname = "/welcome/info";
+  submitUrl.pathname = appendBasePath("/welcome/info");
   BaseAPI.request(submitUrl.href, {
     method: "POST",
     body: JSON.stringify({ org_name, org_role, use_cases, use_other }),

@@ -254,7 +254,7 @@ export class WidgetFrame extends DisposableWithEvents {
   }
 
   private _getEmptyWidgetPage(): string {
-    return new URL("custom-widget.html", getGristConfig().homeUrl!).href;
+    return new URL("custom-widget.html", getGristConfig().homeUrl!.replace(/\/*$/, "/")).href;
   }
 
   private _onMessage(event: MessageEvent) {

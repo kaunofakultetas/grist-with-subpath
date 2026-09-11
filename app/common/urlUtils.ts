@@ -1,6 +1,7 @@
 import { AdminPageConfig, extractOrgParts, GristLoadConfig } from "app/common/gristUrls";
 
 export function getGristConfig(): GristLoadConfig {
+  if (typeof window === "undefined" || !window) { return {} as GristLoadConfig; }
   return (window as any).gristConfig || {};
 }
 
@@ -65,7 +66,7 @@ export function docUrl(docWorkerUrl: string | null | undefined, path?: string) {
 // Get a url on the same webserver as the current page, adding a prefix to encode
 // the current organization if necessary.
 export function getOriginUrl(path: string) {
-  return `${window.location.origin}${addCurrentOrgToPath("/", true)}${path}`;
+  return `${window.location.origin}${appendBasePath(addCurrentOrgToPath("/", true) + path)}`;
 }
 
 // Return a string docId if server has provided one (as in hosted Grist), otherwise null
@@ -91,4 +92,38 @@ export function pageHasHome(): boolean {
 export function fetchFromHome(path: string, opts: RequestInit): Promise<Response> {
   const baseUrl = addCurrentOrgToPath(getGristConfig().homeUrl!);
   return window.fetch(`${baseUrl}${path}`, opts);
+}
+
+/**
+ * Get the normalized base path (e.g. "/grist") the Grist instance is hosted under,
+ * or "" when hosted at the domain root. Read from the given config, or from the
+ * page's gristConfig when omitted.
+ */
+function getBasePathFromConfig(config: Partial<GristLoadConfig> | null): string {
+  const basePath = (config ?? getGristConfig()).basePath;
+  if (!basePath) { return ""; }
+  const withLeadingSlash = basePath.startsWith("/") ? basePath : `/${basePath}`;
+  return withLeadingSlash.replace(/\/+$/, "");
+}
+
+/**
+ * Prefix a root-absolute path with the base path the instance is hosted under.
+ */
+export function appendBasePath(path: string, config: Partial<GristLoadConfig> | null = null): string {
+  return getBasePathFromConfig(config) + path;
+}
+
+/**
+ * Remove the base path prefix from a root-absolute path, if present. Only whole
+ * path segments are matched, so a base path of "/grist" does not strip from
+ * "/gristly/doc".
+ */
+export function stripBasePath(path: string, config: Partial<GristLoadConfig> | null = null): string {
+  const basePath = getBasePathFromConfig(config);
+  if (!basePath) { return path; }
+  if (path === basePath) { return "/"; }
+  if (path.startsWith(`${basePath}/`) || path.startsWith(`${basePath}?`)) {
+    return path.slice(basePath.length);
+  }
+  return path;
 }

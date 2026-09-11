@@ -70,6 +70,7 @@ import { UserProfile } from "app/common/LoginSessionAPI";
 import { StringUnionError } from "app/common/StringUnion";
 import { appSettings, AppSettings } from "app/server/lib/AppSettings";
 import { RequestWithLogin } from "app/server/lib/Authorizer";
+import { prependAppBasePath } from "app/server/lib/basePath";
 import { SessionObj } from "app/server/lib/BrowserSession";
 import { GristLoginSystem, GristServer } from "app/server/lib/GristServer";
 import { getHomeUrl } from "app/server/lib/gristSettings";
@@ -360,7 +361,7 @@ export class OIDCBuilder {
       mreq.session.oidc = {
         idToken: tokenSet.id_token,
       };
-      res.redirect(targetUrl ?? "/");
+      res.redirect(targetUrl ?? prependAppBasePath("/"));
     } catch (err) {
       log.error(`OIDC callback failed: ${err.stack}`);
       const maybeResponse = this._maybeExtractDetailsFromError(err);
@@ -403,7 +404,7 @@ export class OIDCBuilder {
       return this._config.endSessionEndpoint;
     }
     // Ignore redirectUrl because OIDC providers don't allow variable redirect URIs
-    const stableRedirectUri = new URL("/signed-out", getOriginUrl(req)).href;
+    const stableRedirectUri = new URL(getOriginUrl(req) + prependAppBasePath("/signed-out")).href;
     const session: SessionObj | undefined = (req as RequestWithLogin).session;
     return this._client.endSessionUrl({
       post_logout_redirect_uri: stableRedirectUri,

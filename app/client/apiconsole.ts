@@ -4,6 +4,7 @@ import { reportError } from "app/client/models/errors";
 import { urlState } from "app/client/models/gristUrlState";
 import { createAppPage } from "app/client/ui/createAppPage";
 import { invokePrompt } from "app/client/ui2018/modals";
+import { appendBasePath } from "app/common/urlUtils";
 import { DocAPIImpl } from "app/common/UserAPI";
 
 import { dom, styled } from "grainjs";
@@ -253,7 +254,7 @@ function initialize(appModel: AppModel) {
       // where {subdomain} is a variable that defaults to `docs`.
       // We want to use the same server as the page is loaded from.
       // This simplifies the UI and makes it work e.g. on localhost.
-      spec = spec.set("servers", [{ url: window.origin + "/api" }]);
+      spec = spec.set("servers", [{ url: window.origin + appendBasePath("/api") }]);
 
       // Some table-specific parameters have examples with fake data in grist.yml. We don't want
       // to actually use this for running requests, so clear those out.

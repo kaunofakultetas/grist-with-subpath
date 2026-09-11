@@ -18,6 +18,7 @@
  *  - logout redirect (in Users): GRIST_SITE/logout?next=DISCOURSE_SITE
  */
 
+import { prependAppBasePath } from "app/server/lib/basePath";
 import { expressWrap } from "app/server/lib/expressWrap";
 import { getOriginUrl } from "app/server/lib/requestUtils";
 
@@ -68,8 +69,8 @@ function discourseConnect(req: Request, resp: Response) {
     throw new Error("User is not authenticated");
   }
   if (!req.query.user && mreq.users && mreq.users.length > 1) {
-    const origUrl = new URL(req.originalUrl, getOriginUrl(req));
-    const redirectUrl = new URL("/welcome/select-account", getOriginUrl(req));
+    const origUrl = new URL(getOriginUrl(req) + prependAppBasePath(req.originalUrl));
+    const redirectUrl = new URL(getOriginUrl(req) + prependAppBasePath("/welcome/select-account"));
     redirectUrl.searchParams.set("next", origUrl.toString());
     return resp.redirect(redirectUrl.toString());
   }

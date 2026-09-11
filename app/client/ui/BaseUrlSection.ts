@@ -14,6 +14,7 @@ import { theme, vars } from "app/client/ui2018/cssVars";
 import { icon } from "app/client/ui2018/icons";
 import { unstyledButton } from "app/client/ui2018/unstyled";
 import { InstallAPIImpl } from "app/common/InstallAPI";
+import { appendBasePath } from "app/common/urlUtils";
 
 import { bundleChanges, Computed, Disposable, dom, DomContents, input, makeTestId,
   Observable, styled } from "grainjs";
@@ -44,7 +45,7 @@ export class BaseUrlSection extends Disposable {
   /** Base URL changes require a server restart to take effect safely. */
   public readonly needsRestart = true;
 
-  private _detectedUrl = window.location.origin;
+  private _detectedUrl = window.location.origin + appendBasePath("");
   // Empty string means the server has no APP_HOME_URL set (client auto-detects).
   private _serverUrl = Observable.create<string>(this, "");
   private _isManuallySet = Computed.create<boolean>(this, use => Boolean(use(this._serverUrl)));

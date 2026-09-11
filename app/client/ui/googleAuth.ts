@@ -1,5 +1,6 @@
 import { get as getBrowserGlobals } from "app/client/lib/browserGlobals";
 import { GristLoadConfig } from "app/common/gristUrls";
+import { appendBasePath } from "app/common/urlUtils";
 
 import type { Disposable } from "grainjs";
 
@@ -156,5 +157,5 @@ function openPopup(url: string): Window {
  * https://developers.google.com/identity/protocols/oauth2/scopes
  */
 function getGoogleAuthEndpoint(scope: string) {
-  return new URL(`auth/google?scope=${scope}`, window.location.origin).href;
+  return `${window.location.origin}${appendBasePath("/auth/google")}?scope=${scope}`;
 }

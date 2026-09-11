@@ -37,6 +37,7 @@ import {
 import { addRequestUser, getUser, getUserId, isAnonymousUser,
   isSingleUserMode, redirectToLoginUnconditionally } from "app/server/lib/Authorizer";
 import { redirectToLogin, RequestWithLogin, signInStatusMiddleware } from "app/server/lib/Authorizer";
+import { joinUrlWithPath, prependAppBasePath, stripBasePathFromRequest } from "app/server/lib/basePath";
 import { BootKeyLoginMiddleware } from "app/server/lib/Boot";
 import { forceSessionChange } from "app/server/lib/BrowserSession";
 import { Comm, verifyCommHttpRequest } from "app/server/lib/Comm";
@@ -244,6 +245,15 @@ export class FlexServer implements GristServer {
     this.app = express();
     this.app.set("port", port);
 
+    // Strip any configured base path prefix (see GRIST_BASE_PATH) so Grist can be
+    // hosted under a subpath without the reverse proxy rewriting request paths.
+    // The raw webserver handlers normally do this before express is involved; this
+    // is a safety net for externally supplied servers.
+    this.app.use((req, _res, next) => {
+      stripBasePathFromRequest(req);
+      next();
+    });
+
     this.appRoot = getAppRoot();
     this.host = getGristHost();
     log.info(`== Grist version is ${version.version} (commit ${version.gitcommit})`);
@@ -365,8 +375,9 @@ export class FlexServer implements GristServer {
    * getHomeUrl() will still return a URL ending in "/".
    */
   public getHomeUrl(req: express.Request, relPath: string = ""): string {
-    // Get the default home url.
-    const homeUrl = new URL(relPath, this.getDefaultHomeUrl());
+    // Get the default home url. Join paths rather than using new URL(relPath, base),
+    // so that a root-absolute relPath keeps any base path present in APP_HOME_URL.
+    const homeUrl = new URL(joinUrlWithPath(this.getDefaultHomeUrl(), relPath));
     adaptServerUrl(homeUrl, req as RequestWithOrg);
     return homeUrl.href;
   }
@@ -375,8 +386,7 @@ export class FlexServer implements GristServer {
    * Same as getHomeUrl, but for requesting internally.
    */
   public getHomeInternalUrl(relPath: string = ""): string {
-    const homeUrl = new URL(relPath, this.getDefaultHomeInternalUrl());
-    return homeUrl.href;
+    return joinUrlWithPath(this.getDefaultHomeInternalUrl(), relPath);
   }
 
   /**
@@ -386,7 +396,7 @@ export class FlexServer implements GristServer {
    * based on domain).
    */
   public async getHomeUrlByDocId(docId: string, relPath: string = ""): Promise<string> {
-    return new URL(relPath, this.getDefaultHomeInternalUrl()).href;
+    return joinUrlWithPath(this.getDefaultHomeInternalUrl(), relPath);
   }
 
   // Get the port number the server listens on.  This may be different from the port
@@ -1378,7 +1388,7 @@ export class FlexServer implements GristServer {
 
           if (orgInfo.billingAccount.isManager && orgInfo.billingAccount.getEffectiveFeatures().vanityDomain) {
             const prefix: string = isOrgInPathOnly(req.hostname) ? `/o/${mreq.org}` : "";
-            return res.redirect(`${prefix}/billing/payment?billingTask=signUpLite`);
+            return res.redirect(prependAppBasePath(`${prefix}/billing/payment?billingTask=signUpLite`));
           }
         }
         next();
@@ -2650,12 +2660,10 @@ export class FlexServer implements GristServer {
   private _getOrgRedirectUrl(req: RequestWithLogin, subdomain: string, pathname: string = req.originalUrl): string {
     const config = this.getGristConfig();
     const { hostname, orgInPath } = getOrgUrlInfo(subdomain, req.get("host")!, config);
-    const redirectUrl = new URL(pathname, getOriginUrl(req));
+    const orgPath = orgInPath ? `/o/${orgInPath}` : "";
+    const redirectUrl = new URL(getOriginUrl(req) + prependAppBasePath(orgPath + pathname));
     if (hostname) {
       redirectUrl.hostname = hostname;
-    }
-    if (orgInPath) {
-      redirectUrl.pathname = `/o/${orgInPath}` + redirectUrl.pathname;
     }
     return redirectUrl.href;
   }
@@ -2751,6 +2759,7 @@ export class FlexServer implements GristServer {
     for (const server of servers) {
       server.on("request", async (req, res) => {
         try {
+          stripBasePathFromRequest(req);
           if (!disableProxy && await this.getSocketProxy()?.handleHTTPRequest(req, res)) {
             return;
           }
@@ -2774,6 +2783,7 @@ export class FlexServer implements GristServer {
 
       server.on("upgrade", async (req, socket: net.Socket, head) => {
         try {
+          stripBasePathFromRequest(req);
           if (!disableProxy && await this.getSocketProxy()?.handleHTTPUpgrade(req, socket, head)) {
             return;
           }

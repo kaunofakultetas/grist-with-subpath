@@ -1,6 +1,7 @@
 import { hooks } from "app/client/Hooks";
 import { urlState } from "app/client/models/gristUrlState";
 import { GristLoadConfig } from "app/common/gristUrls";
+import { appendBasePath } from "app/common/urlUtils";
 import { UserAPIImpl } from "app/common/UserAPI";
 
 /**
@@ -14,7 +15,7 @@ import { UserAPIImpl } from "app/common/UserAPI";
  */
 export function getFallbackHomeUrl(): string {
   const { host, protocol } = window.location;
-  return `${protocol}//${host}`;
+  return `${protocol}//${host}${appendBasePath("")}`;
 }
 
 /**

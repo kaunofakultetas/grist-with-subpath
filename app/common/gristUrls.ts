@@ -10,7 +10,7 @@ import { LocalPlugin } from "app/common/plugin";
 import { StringUnion } from "app/common/StringUnion";
 import { TelemetryLevel } from "app/common/Telemetry";
 import { ThemeAppearance, themeAppearances, ThemeName, themeNames } from "app/common/ThemePrefs";
-import { getGristConfig } from "app/common/urlUtils";
+import { appendBasePath, getGristConfig, stripBasePath } from "app/common/urlUtils";
 import { Document, PublicDocWorkerUrlInfo } from "app/common/UserAPI";
 import { IAttachedCustomWidget } from "app/common/widgetTypes";
 import { UIRowId } from "app/plugin/GristAPI";
@@ -453,7 +453,7 @@ export function encodeUrl(gristConfig: Partial<GristLoadConfig>,
   }
   const queryStr = encodeQueryParams(queryParams);
 
-  url.pathname = parts.join("");
+  url.pathname = appendBasePath(parts.join(""), gristConfig);
   url.search = queryStr;
 
   if (state.homePageTab) {
@@ -495,7 +495,8 @@ export function decodeUrl(gristConfig: Partial<GristLoadConfig>, location: Locat
 }): IGristUrlState {
   location = new URL(location.href);  // Make sure location is a URL.
   options?.tweaks?.preDecode?.({ url: location });
-  const parts = location.pathname.slice(1).split("/");
+  const pathname = stripBasePath(location.pathname, gristConfig);
+  const parts = pathname.slice(1).split("/");
   const state: IGristUrlState = {};
 
   // Bare minimum we can do to detect API URLs: if it starts with /api/ or /o/{org}/api/...
@@ -1049,6 +1050,9 @@ export interface GristLoadConfig {
 
   // Maximum users to display for user presence features (e.g. active user list)
   userPresenceMaxUsers?: number;
+
+  // Base path (e.g. "/grist") when the instance is hosted under a subpath of a domain.
+  basePath?: string;
 
   warnBeforeSharingPublicly?: boolean;
 

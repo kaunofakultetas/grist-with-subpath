@@ -58,7 +58,7 @@ export class BootKeyLoginMiddleware implements GristLoginMiddleware {
   constructor(private _server: GristServer) {}
 
   public async getLoginRedirectUrl(req: Request, _target: URL): Promise<string> {
-    const loginUrl = new URL("/boot", this._server.getHomeUrl(req));
+    const loginUrl = new URL(this._server.getHomeUrl(req, "/boot"));
     return loginUrl.href;
   }
 

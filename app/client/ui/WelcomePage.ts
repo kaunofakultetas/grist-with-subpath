@@ -16,6 +16,7 @@ import { basicButtonLink, bigBasicButtonLink, bigPrimaryButton } from "app/clien
 import { mediaSmall, testId, theme, vars } from "app/client/ui2018/cssVars";
 import { cssLink } from "app/client/ui2018/links";
 import { WelcomePage as WelcomePageEnum } from "app/common/gristUrls";
+import { appendBasePath } from "app/common/urlUtils";
 
 import { Disposable, dom, domComputed, DomContents, MultiHolder, Observable, styled } from "grainjs";
 
@@ -90,7 +91,7 @@ export class WelcomePage extends Disposable {
     const password = Observable.create(owner, "");
 
     const action = new URL(window.location.href);
-    action.pathname = "/signup/register";
+    action.pathname = appendBasePath("/signup/register");
 
     return dom(
       "form",
@@ -146,7 +147,7 @@ export class WelcomePage extends Disposable {
     setTimeout(() => inputEl.focus(), 10);
 
     const action = new URL(window.location.href);
-    action.pathname = "/signup/verify";
+    action.pathname = appendBasePath("/signup/verify");
 
     const url = new URL(location.href);
     const email = Observable.create(owner, url.searchParams.get("email") || "");
@@ -157,7 +158,7 @@ export class WelcomePage extends Disposable {
       handleSubmitForm(pending, (result) => {
         if (result.status === "confirmed") {
           const verified = new URL(window.location.href);
-          verified.pathname = "/verified";
+          verified.pathname = appendBasePath("/verified");
           window.location.assign(verified.href);
         } else if (result.status === "resent") {
           // just to give a sense that something happened...
@@ -199,7 +200,7 @@ export class WelcomePage extends Disposable {
       // scheme), and check that it is same-origin to prevent cross-origin open redirect.
       const nextUrl = new URL(next, location.href);
       const url = sanitizeHttpUrl(nextUrl.href) && nextUrl.origin === location.origin ?
-        nextUrl : new URL("/", location.href);
+        nextUrl : new URL(appendBasePath("/"), location.href);
       url.searchParams.set("user", email);
       return url.toString();
     }

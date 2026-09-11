@@ -11,6 +11,7 @@ import { cssModalTitle, IModalControl, modal } from "app/client/ui2018/modals";
 import { PlanSelection } from "app/common/BillingAPI";
 import { TEAM_PLAN } from "app/common/Features";
 import { checkSubdomainValidity } from "app/common/orgNameUtils";
+import { appendBasePath } from "app/common/urlUtils";
 import { UserAPIImpl } from "app/common/UserAPI";
 
 import { Disposable, dom, DomContents, DomElementArg, input, makeTestId, Observable, styled } from "grainjs";
@@ -159,7 +160,7 @@ function buildTeamPage({
           { style: "align-items: baseline" },
           cssField(
             { style: "flex: 0 1 0; min-width: auto; margin-right: 5px" },
-            dom.text(`${window.location.origin}/o/`)),
+            dom.text(`${window.location.origin}${appendBasePath("/o/")}`)),
           cssField(cssInput(
             domain, { onInput: true }, clickOnEnter, group.inputReset(), testId("domain"),
           )),

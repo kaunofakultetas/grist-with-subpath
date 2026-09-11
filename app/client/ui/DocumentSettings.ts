@@ -32,6 +32,7 @@ import { commonUrls, GristLoadConfig, PREFERRED_STORAGE_ANCHOR } from "app/commo
 import { not, propertyCompare } from "app/common/gutil";
 import { getCurrency, locales } from "app/common/Locales";
 import { isOwner, isOwnerOrEditor } from "app/common/roles";
+import { appendBasePath } from "app/common/urlUtils";
 import {
   DOCTYPE_NORMAL,
   DOCTYPE_TEMPLATE,
@@ -647,7 +648,7 @@ Anyone may edit, which will create a new unsaved copy.",
 
 function getApiConsoleLink(docPageModel: DocPageModel) {
   const url = new URL(location.href);
-  url.pathname = "/apiconsole";
+  url.pathname = appendBasePath("/apiconsole");
   url.searchParams.set("docId", docPageModel.currentDocId.get()!);
   // Some extra question marks to placate a test fixture at test/fixtures/projects/DocumentSettings.ts
   url.searchParams.set("workspaceId", String(docPageModel.currentWorkspace?.get()?.id || ""));

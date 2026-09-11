@@ -11,6 +11,7 @@ import { DocAuthResult, HomeDBAuth } from "app/gen-server/lib/homedb/Interfaces"
 import { AccessTokenCredential } from "app/server/lib/AccessTokenCredential";
 import { AuthCredential } from "app/server/lib/AuthCredential";
 import { AuthSession } from "app/server/lib/AuthSession";
+import { prependAppBasePath } from "app/server/lib/basePath";
 import {
   forceSessionChange, generateAltSessionID, getSessionProfiles,
   getSessionUser, getSignInStatus, linkOrgWithEmail, SessionObj, SessionUserObj, SignInStatus,
@@ -631,7 +632,7 @@ export function redirectToLoginUnconditionally(
     // logging out again, `users` will still be set.
     const signUp: boolean = (mreq.session.users === undefined);
     log.debug(`Authorizer: redirecting to ${signUp ? "sign up" : "log in"}`);
-    const redirectUrl = new URL(getOriginUrl(req) + req.originalUrl);
+    const redirectUrl = new URL(getOriginUrl(req) + prependAppBasePath(req.originalUrl));
     if (signUp) {
       return resp.redirect(await getSignUpRedirectUrl(req, redirectUrl));
     } else {

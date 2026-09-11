@@ -15,7 +15,7 @@ import {
   GristLoadConfig,
   IFeature, ImplicitlyEnabledFeatures,
 } from "app/common/gristUrls";
-import { isAffirmative, replaceLiteral, replaceLiterals } from "app/common/gutil";
+import { isAffirmative, removeTrailingSlash, replaceLiteral, replaceLiterals } from "app/common/gutil";
 import { getTagManagerSnippet } from "app/common/tagManager";
 import { Document } from "app/common/UserAPI";
 import { AttachedCustomWidgets, IAttachedCustomWidget } from "app/common/widgetTypes";
@@ -23,6 +23,7 @@ import { SUPPORT_EMAIL } from "app/gen-server/lib/homedb/HomeDBManager";
 import { isInstallAdminReq } from "app/server/lib/adminPageConfig";
 import { appSettings } from "app/server/lib/AppSettings";
 import { isAnonymousUser, isSingleUserMode, RequestWithLogin } from "app/server/lib/Authorizer";
+import { getAppBasePath } from "app/server/lib/basePath";
 import { RequestWithOrg } from "app/server/lib/extractOrg";
 import { GristServer } from "app/server/lib/GristServer";
 import {
@@ -169,6 +170,7 @@ export function makeGristConfig(options: MakeGristConfigOptions): GristLoadConfi
     formFraming: GRIST_FEATURE_FORM_FRAMING as FormFraming,
     adminDefinedUrls: process.env.GRIST_CUSTOM_COMMON_URLS,
     userPresenceMaxUsers: getUserPresenceMaxUsers(),
+    basePath: getAppBasePath() || undefined,
     warnBeforeSharingPublicly: isAffirmative(process.env.GRIST_WARN_BEFORE_SHARING_PUBLICLY),
     helpUsImproveSurveyUrl: getHelpUsImproveSurveyUrl(),
   };
@@ -229,7 +231,8 @@ export function makeSendAppPage({ server, staticDir, tag, testLogin, baseDomain 
     const staticTag = options.tag || tag;
     // If boot tag is used, serve assets locally, otherwise respect
     // APP_STATIC_URL.
-    const staticOrigin = staticTag === "boot" ? "" : (process.env.APP_STATIC_URL || "");
+    const staticOrigin = staticTag === "boot" ? "" :
+      (removeTrailingSlash(process.env.APP_STATIC_URL || "") || getAppBasePath());
     const staticBaseUrl = `${staticOrigin}/v/${staticTag}/`;
     const customHeadHtmlSnippet = server.create.getExtraHeadHtml?.() ?? "";
     const warning = testLogin ? "<div class=\"dev_warning\">Authentication is not enforced</div>" : "";

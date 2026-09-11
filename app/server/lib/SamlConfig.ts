@@ -58,6 +58,7 @@
 
 import { SAML_PROVIDER_KEY } from "app/common/loginProviders";
 import { AppSettings } from "app/server/lib/AppSettings";
+import { prependAppBasePath } from "app/server/lib/basePath";
 import { expressWrap } from "app/server/lib/expressWrap";
 import { GristLoginSystem, GristServer } from "app/server/lib/GristServer";
 import log from "app/server/lib/log";
@@ -259,7 +260,7 @@ export class SamlBuilder {
 
     // Starting point for login. It redirects to the IdP, and then to /saml/assert.
     app.get("/saml/login", expressWrap(async (req, res, next) => {
-      res.redirect(await this.getLoginRedirectUrl(req, new URL(getOriginUrl(req))));
+      res.redirect(await this.getLoginRedirectUrl(req, new URL(getOriginUrl(req) + prependAppBasePath("/"))));
     }));
 
     // Assert endpoint for when the login completes as POST.
@@ -310,7 +311,7 @@ export class SamlBuilder {
       // Presumably an IdP-inititated signin.
       return {
         sessionId,
-        redirectUrl: getOriginUrl(req),
+        redirectUrl: getOriginUrl(req) + prependAppBasePath("/"),
         unsolicited: true,
         action: "login",
       };

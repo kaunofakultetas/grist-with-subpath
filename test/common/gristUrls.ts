@@ -1,7 +1,8 @@
 import { commonUrls as defaultCommonUrls,
-  decodeUrl, getCommonUrls,
+  decodeUrl, encodeUrl, getCommonUrls,
   getHostType, getSlugIfNeeded, IGristUrlState, parseFirstUrlPart,
 } from "app/common/gristUrls";
+import { appendBasePath, stripBasePath } from "app/common/urlUtils";
 import * as testUtils from "test/server/testUtils";
 
 import { assert } from "chai";
@@ -272,6 +273,32 @@ describe("gristUrls", function() {
         assert.equal(commonUrls.help, "https://getgrist.com");
         assert.equal(commonUrls.helpAccessRules, "https://support.getgrist.com/access-rules");
       });
+    });
+  });
+  describe("base path", function() {
+    const config = { basePath: "/itsk/grist" };
+
+    it("should append and strip a configured base path", function() {
+      assert.equal(appendBasePath("/doc/abc", config), "/itsk/grist/doc/abc");
+      assert.equal(appendBasePath("/", config), "/itsk/grist/");
+      assert.equal(appendBasePath("/x", {}), "/x");
+      assert.equal(stripBasePath("/itsk/grist/doc/abc", config), "/doc/abc");
+      assert.equal(stripBasePath("/itsk/grist", config), "/");
+      assert.equal(stripBasePath("/itsk/gristly/doc", config), "/itsk/gristly/doc");
+      assert.equal(stripBasePath("/doc/abc", config), "/doc/abc");
+    });
+
+    it("should include the base path in encoded urls", function() {
+      const url = new URL("https://example.com/itsk/grist/doc/abc");
+      const state: IGristUrlState = { doc: "abc" };
+      assert.equal(encodeUrl(config, state, url), "https://example.com/itsk/grist/doc/abc");
+    });
+
+    it("should strip the base path when decoding urls", function() {
+      const url = new URL("https://example.com/itsk/grist/doc/abc/p/5");
+      const state = decodeUrl(config, url);
+      assert.equal(state.doc, "abc");
+      assert.equal(state.docPage, 5);
     });
   });
 });

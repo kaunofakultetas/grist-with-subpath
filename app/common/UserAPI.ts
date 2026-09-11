@@ -30,7 +30,7 @@ import {
   WebhookUpdate,
 } from "app/common/Triggers";
 import { UploadResult } from "app/common/uploads";
-import { addCurrentOrgToPath, getGristConfig } from "app/common/urlUtils";
+import { addCurrentOrgToPath, appendBasePath, getGristConfig, stripBasePath } from "app/common/urlUtils";
 import {
   AddOrUpdateRecord,
   AttachmentStore,
@@ -1664,8 +1664,10 @@ export type PublicDocWorkerUrlInfo = {
 };
 
 export function getUrlFromPrefix(homeUrl: string, prefix: string) {
+  // Insert the prefix after any base path the instance is hosted under
+  // (e.g. https://x.com/grist + /dw/w1 gives https://x.com/grist/dw/w1/).
   const url = new URL(homeUrl);
-  url.pathname = prefix + url.pathname;
+  url.pathname = appendBasePath(prefix + stripBasePath(url.pathname));
   return url.href;
 }
 

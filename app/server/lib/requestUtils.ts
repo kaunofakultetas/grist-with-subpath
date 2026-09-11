@@ -13,6 +13,7 @@ import { DocScope, Scope } from "app/gen-server/lib/homedb/HomeDBManager";
 import { QueryResult } from "app/gen-server/lib/homedb/Interfaces";
 import { appSettings } from "app/server/lib/AppSettings";
 import { getTransitiveHeaders, getUserId, RequestWithLogin } from "app/server/lib/Authorizer";
+import { prependAppBasePath } from "app/server/lib/basePath";
 import { RequestWithOrg } from "app/server/lib/extractOrg";
 import { RequestWithGrist } from "app/server/lib/GristServer";
 import { getHomeUrl } from "app/server/lib/gristSettings";
@@ -80,7 +81,9 @@ export function adaptServerUrl(url: URL, req: RequestWithOrg): void {
  * urls that stay within that domain.
  */
 export function addOrgToPathIfNeeded(req: RequestWithOrg, path: string): string {
-  return (isOrgInPathOnly(req.hostname) && req.org) ? `/o/${req.org}${path}` : path;
+  const orgPath = (isOrgInPathOnly(req.hostname) && req.org) ? `/o/${req.org}${path}` : path;
+  // When hosted under a base path, generated same-domain paths must include it.
+  return prependAppBasePath(orgPath);
 }
 
 /**
@@ -450,7 +453,10 @@ export interface RequestWithGristInfo extends Request {
 export function getOriginUrl(req: IncomingMessage) {
   const host = req.headers.host;
   const protocol = getEndUserProtocol(req);
-  return `${protocol}://${host}`;
+  const defaultPort = (protocol === "https") ? "443" : "80";
+  const port = req.headers["x-forwarded-port"] || defaultPort;
+  const portPart = (port === defaultPort) ? "" : `:${port}`;
+  return `${protocol}://${host}${portPart}`;
 }
 
 /**

@@ -4,6 +4,7 @@ import { extractOrgParts, getHostType, getSingleOrg } from "app/common/gristUrls
 import { isAffirmative } from "app/common/gutil";
 import { Organization } from "app/gen-server/entity/Organization";
 import { HomeDBManager } from "app/gen-server/lib/homedb/HomeDBManager";
+import { prependAppBasePath } from "app/server/lib/basePath";
 import { GristServer } from "app/server/lib/GristServer";
 import { getOriginUrl } from "app/server/lib/requestUtils";
 
@@ -159,7 +160,7 @@ export class Hosts {
         return o?.host || undefined;
       });
       if (orgHost && orgHost !== req.hostname) {
-        const url = new URL(getOriginUrl(req) + req.path);
+        const url = new URL(getOriginUrl(req) + prependAppBasePath(req.path));
         url.hostname = orgHost;  // assigning hostname rather than host preserves port.
         return resp.redirect(url.href);
       }
